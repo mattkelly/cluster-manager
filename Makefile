@@ -9,16 +9,6 @@ PKG := "github.com/containership/$(PROJECT_NAME)"
 PKG_LIST := $(shell glide novendor)
 GO_FILES := $(shell find . -type f -not -path './vendor/*' -name '*.go')
 
-# TODO remove this hack. We need Jenkins Dockerfiles until GKE supports a
-# version of Docker that supports multi-stage builds.
-ifeq ($(JENKINS), 1)
-	AGENT_DOCKERFILE=Dockerfile-jenkins.agent
-	COORDINATOR_DOCKERFILE=Dockerfile-jenkins.coordinator
-else
-	AGENT_DOCKERFILE=Dockerfile.agent
-	COORDINATOR_DOCKERFILE=Dockerfile.coordinator
-endif
-
 # TODO generated fakes can get a vet error for a copied lock
 VET_LIST := $(shell go list ./... | grep -v '/pkg/client/clientset/versioned/fake')
 
@@ -118,7 +108,7 @@ undeploy: undeploy-agent undeploy-coordinator undeploy-common ## Delete everythi
 # builder image is tagged to allow it to be pushed/pulled and used as cache
 # for CI.
 define multistage_build
-	@docker image build -t $(1):builder \
+	docker image build -t $(1):builder \
 		--target builder \
 		--cache-from $(AGENT_IMAGE_NAME):builder \
 		--cache-from $(COORDINATOR_IMAGE_NAME):builder \
@@ -139,14 +129,14 @@ endef
 
 .PHONY: build-agent
 build-agent: ## Build the agent in Docker
-	$(call multistage_build,$(AGENT_IMAGE_NAME),$(AGENT_DOCKERFILE))
+	$(call multistage_build,$(AGENT_IMAGE_NAME),Dockerfile.agent)
 
 .PHONY: agent
 agent: build-agent deploy-agent ## Build and deploy the agent
 
 .PHONY: build-coordinator
 build-coordinator: ## Build the coordinator in Docker
-	$(call multistage_build,$(COORDINATOR_IMAGE_NAME),$(COORDINATOR_DOCKERFILE))
+	$(call multistage_build,$(COORDINATOR_IMAGE_NAME),Dockerfile.coordinator)
 
 .PHONY: coordinator
 coordinator: build-coordinator deploy-coordinator ## Build and deploy the coordinator
