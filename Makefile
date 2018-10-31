@@ -1,6 +1,8 @@
 SHELL=/bin/bash
 PROJECT_NAME := "cluster-manager"
+AGENT_IMAGE_NAME ?= "containership/cloud-agent"
 AGENT_IMAGE_TAG ?= "latest"
+COORDINATOR_IMAGE_NAME ?= "containership/cloud-coordinator"
 COORDINATOR_IMAGE_TAG ?= "latest"
 PKG := "github.com/containership/$(PROJECT_NAME)"
 PKG_LIST := $(shell glide novendor)
@@ -111,24 +113,39 @@ deploy: deploy-agent deploy-coordinator # Deploy everything
 .PHONY: undeploy
 undeploy: undeploy-agent undeploy-coordinator undeploy-common ## Delete everything from Kubernetes
 
-.PHONY: build-agent
-build-agent: ## Build the agent in Docker
-	@eval $$(minikube docker-env) ;\
-	docker image build -t containership/cloud-agent:$(AGENT_IMAGE_TAG) \
+# Perform a multistage build of agent or coordinator. The intermediate
+# builder image is tagged to allow it to be pushed/pulled and used as cache
+# for CI.
+define multistage_build
+	@docker image build -t $(1):builder \
+		--target builder \
+		--cache-from $(AGENT_IMAGE_NAME):builder \
+		--cache-from $(COORDINATOR_IMAGE_NAME):builder \
 		--build-arg GIT_DESCRIBE=`git describe --dirty` \
 		--build-arg GIT_COMMIT=`git rev-parse --short HEAD` \
-		-f $(AGENT_DOCKERFILE) .
+		-f $(2) . \
+	&& \
+	docker image build -t $(1):$(AGENT_IMAGE_TAG) \
+		--target runner \
+		--cache-from $(AGENT_IMAGE_NAME):builder \
+		--cache-from $(AGENT_IMAGE_NAME):latest \
+		--cache-from $(COORDINATOR_IMAGE_NAME):builder \
+		--cache-from $(COORDINATOR_IMAGE_NAME):latest \
+		--build-arg GIT_DESCRIBE=`git describe --dirty` \
+		--build-arg GIT_COMMIT=`git rev-parse --short HEAD` \
+		-f $(2) .
+endef
+
+.PHONY: build-agent
+build-agent: ## Build the agent in Docker
+	$(call multistage_build,$(AGENT_IMAGE_NAME),$(AGENT_DOCKERFILE))
 
 .PHONY: agent
 agent: build-agent deploy-agent ## Build and deploy the agent
 
 .PHONY: build-coordinator
 build-coordinator: ## Build the coordinator in Docker
-	@eval $$(minikube docker-env) ;\
-	docker image build -t containership/cloud-coordinator:$(COORDINATOR_IMAGE_TAG) \
-		--build-arg GIT_DESCRIBE=`git describe --dirty` \
-		--build-arg GIT_COMMIT=`git rev-parse --short HEAD` \
-		-f $(COORDINATOR_DOCKERFILE) .
+	$(call multistage_build,$(COORDINATOR_IMAGE_NAME),$(COORDINATOR_DOCKERFILE))
 
 .PHONY: coordinator
 coordinator: build-coordinator deploy-coordinator ## Build and deploy the coordinator

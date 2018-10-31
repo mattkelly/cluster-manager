@@ -4,11 +4,12 @@ go:
   - 1.11.x
 
 before_install:
-  - curl https://glide.sh/get | sh
-  - go get -u golang.org/x/lint/golint
-    # The following is required for `make verify`
-  - go get -u github.com/golang/glog github.com/spf13/pflag golang.org/x/tools/imports
-
+  # We're making an assumption here that pulling these images in order to use
+  # their layers for cache is faster than installing dependencies for every build.
+  - docker pull containership/cloud-agent:latest
+  - docker pull containership/cloud-agent:builder
+  - docker pull containership/cloud-coordinator:latest
+  - docker pull containership/cloud-coordinator:builder
 
 install:
   - glide install -v
