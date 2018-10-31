@@ -1,4 +1,9 @@
+sudo: required
+
 language: go
+
+services:
+  - docker
 
 go:
   - 1.11.x
@@ -37,3 +42,12 @@ jobs:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+deploy:
+  provider: script
+  on:
+    branch: master
+  script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - docker push containership/cloud-agent:latest
+    - docker push containership/cloud-coordinator:latest
