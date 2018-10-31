@@ -16,7 +16,7 @@ install:
 
 jobs:
   include:
-    - stage: "Tests"
+    - stage: "Test"
       name: "Format Check"
       script: docker run -it containership/cluster-manager-test make fmt-check
     - script: docker run -it containership/cluster-manager-test make vet
@@ -31,10 +31,9 @@ jobs:
       name: "Unit Test and Coverage"
 
     - stage: "Build"
-      name: "Build Agent"
+      name: "Build Agent and Coordinator"
       script: make build-agent
-    - script: make build-coordinator
-      name: "Build Coordinator"
+      script: make build-coordinator
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
