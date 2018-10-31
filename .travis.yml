@@ -45,8 +45,6 @@ after_success:
 
 deploy:
   provider: script
-  on:
-    branch: master
   script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
     - docker push containership/cloud-agent:latest
