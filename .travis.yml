@@ -12,20 +12,22 @@ before_install:
   - docker pull containership/cloud-coordinator:builder
 
 install:
-  - glide install -v
+  - make build-test
 
 jobs:
   include:
     - stage: "Tests"
       name: "Format Check"
-      script: make fmt-check
-    - script: make vet
+      script: docker run -it containership/cluster-manager-test make fmt-check
+    - script: docker run -it containership/cluster-manager-test make vet
       name: "Vet"
-    - script: make lint
+    - script: docker run -it containership/cluster-manager-test make lint
       name: "Lint"
-    - script: make verify
+    - script: docker run -it containership/cluster-manager-test make verify
       name: "Verify Generated Code"
-    - script: make coverage
+    - script:
+      - mkdir shared
+      - docker run -v "$PWD/shared:/shared" -it containership/cluster-manager-test bash -c "make coverage && mv coverage.txt /shared"
       name: "Unit Test and Coverage"
 
     - stage: "Build"

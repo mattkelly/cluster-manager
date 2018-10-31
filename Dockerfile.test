@@ -1,11 +1,11 @@
-# This Dockerfile is only for Jenkins tests
+# This Dockerfile is only for tests in CI
 FROM golang:1.10.1-alpine3.7
 
 # Add build tools
 RUN apk update && \
     apk add --no-cache git gcc musl-dev glide
 
-ENV SRC_DIR=/go/src/github.com/containership/cloud-agent/
+ENV SRC_DIR=/go/src/github.com/containership/cluster-manager/
 
 WORKDIR /app
 
@@ -18,8 +18,11 @@ RUN cd $SRC_DIR && \
 # Add the source code:
 COPY . $SRC_DIR
 
-# These are only required for running Jenkins tests. This layer/dependency
+# These are only required for running tests in CI. This layer/dependency
 # lives way down here because all previous layers are shared with prod builds.
 RUN apk add --no-cache bash make
+RUN go get -u golang.org/x/lint/golint
+# The following is required for `make verify`
+RUN go get -u github.com/golang/glog github.com/spf13/pflag golang.org/x/tools/imports
 
 WORKDIR $SRC_DIR

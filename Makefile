@@ -4,6 +4,7 @@ AGENT_IMAGE_NAME ?= "containership/cloud-agent"
 AGENT_IMAGE_TAG ?= "latest"
 COORDINATOR_IMAGE_NAME ?= "containership/cloud-coordinator"
 COORDINATOR_IMAGE_TAG ?= "latest"
+TEST_IMAGE_NAME ?= "containership/$(PROJECT_NAME)-test"
 PKG := "github.com/containership/$(PROJECT_NAME)"
 PKG_LIST := $(shell glide novendor)
 GO_FILES := $(shell find . -type f -not -path './vendor/*' -name '*.go')
@@ -149,6 +150,13 @@ build-coordinator: ## Build the coordinator in Docker
 
 .PHONY: coordinator
 coordinator: build-coordinator deploy-coordinator ## Build and deploy the coordinator
+
+.PHONY: build-test
+build-test: ## Build image for running tests in CI
+	@docker image build -t $(TEST_IMAGE_NAME) \
+		--cache-from $(AGENT_IMAGE_NAME):builder \
+		--cache-from $(COORDINATOR_IMAGE_NAME):builder \
+		-f Dockerfile.test .
 
 .PHONY: release
 release: ## Build release images for agent and coordinator (must be on semver tag)
