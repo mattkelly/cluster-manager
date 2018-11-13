@@ -14,6 +14,12 @@ import (
 	"github.com/containership/cluster-manager/pkg/log"
 )
 
+// Interface is the interface for a syncController, which knows
+// how to sync a resource
+type Interface interface {
+	SyncWithCloud(stopCh <-chan struct{}) error
+}
+
 type syncController struct {
 	name string
 

@@ -12,45 +12,29 @@ import (
 // CloudSynchronizer synchronizes Containership Cloud resources
 // into our Kubernetes CRDs.
 type CloudSynchronizer struct {
-	userSyncController     *synccontroller.UserSyncController
-	registrySyncController *synccontroller.RegistrySyncController
-	pluginSyncController   *synccontroller.PluginSyncController
-	syncStopCh             chan struct{}
-	stopped                bool
+	syncControllers []synccontroller.Interface
+	syncStopCh      chan struct{}
+	stopped         bool
 }
 
 // NewCloudSynchronizer constructs a new CloudSynchronizer.
 func NewCloudSynchronizer(csInformerFactory csinformers.SharedInformerFactory) *CloudSynchronizer {
 	return &CloudSynchronizer{
-		userSyncController: synccontroller.NewUser(
-			k8sutil.API().Client(),
-			k8sutil.CSAPI().Client(),
-			csInformerFactory,
-		),
-
-		registrySyncController: synccontroller.NewRegistry(
-			k8sutil.API().Client(),
-			k8sutil.CSAPI().Client(),
-			csInformerFactory,
-		),
-
-		pluginSyncController: synccontroller.NewPlugin(
-			k8sutil.API().Client(),
-			k8sutil.CSAPI().Client(),
-			csInformerFactory,
-		),
-
 		syncStopCh: make(chan struct{}),
-		stopped:    false,
 	}
 }
 
 // Run kicks off cloud sync routines.
 func (s *CloudSynchronizer) Run() {
 	log.Info("Running CloudSynchronizer")
-	go s.userSyncController.SyncWithCloud(s.syncStopCh)
-	go s.registrySyncController.SyncWithCloud(s.syncStopCh)
-	go s.pluginSyncController.SyncWithCloud(s.syncStopCh)
+	for _, sc := range s.syncControllers {
+		go sc.SyncWithCloud(s.syncStopCh)
+	}
+}
+
+// RegisterController registers a SyncController
+func (s *CloudSynchronizer) RegisterController(sc synccontroller.Interface) {
+	s.syncControllers = append(s.syncControllers, sc)
 }
 
 // RequestTerminate requests that all Containership resources be deleted from

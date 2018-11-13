@@ -9,6 +9,7 @@ import (
 	"github.com/containership/cluster-manager/pkg/env"
 	"github.com/containership/cluster-manager/pkg/k8sutil"
 	"github.com/containership/cluster-manager/pkg/log"
+	synccontroller "github.com/containership/cluster-manager/pkg/resources/sync_controller"
 )
 
 var (
@@ -51,10 +52,29 @@ func Initialize() {
 			k8sutil.API().Client(), k8sutil.CSAPI().Client(), kubeInformerFactory, csInformerFactory)
 	}
 
+	userSyncController := synccontroller.NewUser(
+		k8sutil.API().Client(),
+		k8sutil.CSAPI().Client(),
+		csInformerFactory,
+	)
+	registrySyncController := synccontroller.NewRegistry(
+		k8sutil.API().Client(),
+		k8sutil.CSAPI().Client(),
+		csInformerFactory,
+	)
+	pluginSyncController := synccontroller.NewPlugin(
+		k8sutil.API().Client(),
+		k8sutil.CSAPI().Client(),
+		csInformerFactory,
+	)
+
 	// Synchronizer needs to be created before any jobs start so
 	// that all needed index functions can be added to the
 	// informers
 	cloudSynchronizer = NewCloudSynchronizer(csInformerFactory)
+	cloudSynchronizer.RegisterController(userSyncController)
+	cloudSynchronizer.RegisterController(registrySyncController)
+	cloudSynchronizer.RegisterController(pluginSyncController)
 }
 
 // Run kicks off the informer factories, controller, and synchronizer.
