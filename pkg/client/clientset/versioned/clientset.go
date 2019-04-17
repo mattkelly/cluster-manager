@@ -1,5 +1,5 @@
 /*
-Copyright The Kubernetes Authors.
+Copyright 2019 Containership
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,11 +33,7 @@ type Interface interface {
 	// Deprecated: please explicitly pick a version if possible.
 	ContainershipAuth() containershipauthv3.ContainershipAuthV3Interface
 	ContainershipV3() containershipv3.ContainershipV3Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Containership() containershipv3.ContainershipV3Interface
 	ContainershipProvisionV3() containershipprovisionv3.ContainershipProvisionV3Interface
-	// Deprecated: please explicitly pick a version if possible.
-	ContainershipProvision() containershipprovisionv3.ContainershipProvisionV3Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -65,20 +61,8 @@ func (c *Clientset) ContainershipV3() containershipv3.ContainershipV3Interface {
 	return c.containershipV3
 }
 
-// Deprecated: Containership retrieves the default version of ContainershipClient.
-// Please explicitly pick a version.
-func (c *Clientset) Containership() containershipv3.ContainershipV3Interface {
-	return c.containershipV3
-}
-
 // ContainershipProvisionV3 retrieves the ContainershipProvisionV3Client
 func (c *Clientset) ContainershipProvisionV3() containershipprovisionv3.ContainershipProvisionV3Interface {
-	return c.containershipProvisionV3
-}
-
-// Deprecated: ContainershipProvision retrieves the default version of ContainershipProvisionClient.
-// Please explicitly pick a version.
-func (c *Clientset) ContainershipProvision() containershipprovisionv3.ContainershipProvisionV3Interface {
 	return c.containershipProvisionV3
 }
 
