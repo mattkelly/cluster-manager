@@ -3,7 +3,7 @@ package v3
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apiv3 "github.com/containership/cluster-manager/pkg/apis/containership.io/v3"
+	csv3 "github.com/containership/cluster-manager/pkg/apis/containership.io/v3"
 )
 
 // +genclient
@@ -34,7 +34,7 @@ type ClusterSpec struct {
 
 	// These are not part of the cluster response from cloud. Instead, a
 	// separate labels request is made to load these.
-	Labels []apiv3.ClusterLabelSpec
+	Labels []csv3.ClusterLabelSpec
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

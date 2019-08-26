@@ -30,6 +30,8 @@ type CloudSynchronizer struct {
 	clusterLabelSyncController  *synccontroller.ClusterLabelSyncController
 	nodePoolLabelSyncController *synccontroller.NodePoolLabelSyncController
 
+	clusterSyncController *synccontroller.ClusterSyncController
+
 	syncStopCh chan struct{}
 	stopped    bool
 }
@@ -111,6 +113,13 @@ func NewCloudSynchronizer(csInformerFactory csinformers.SharedInformerFactory, c
 			cloudclientset,
 		),
 
+		clusterSyncController: synccontroller.NewCluster(
+			k8sutil.API().Client(),
+			k8sutil.CSAPI().Client(),
+			csInformerFactory,
+			cloudclientset,
+		),
+
 		syncStopCh: make(chan struct{}),
 		stopped:    false,
 	}
@@ -132,6 +141,8 @@ func (s *CloudSynchronizer) Run() {
 
 	go s.clusterLabelSyncController.SyncWithCloud(s.syncStopCh)
 	go s.nodePoolLabelSyncController.SyncWithCloud(s.syncStopCh)
+
+	go s.clusterSyncController.SyncWithCloud(s.syncStopCh)
 }
 
 // RequestTerminate requests that all Containership resources be deleted from
