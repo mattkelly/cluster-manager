@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	cscloud "github.com/containership/csctl/cloud"
-	apitypes "github.com/containership/csctl/cloud/api/types"
+	//apitypes "github.com/containership/csctl/cloud/api/types"
 
 	csv3 "github.com/containership/cluster-manager/pkg/apis/containership.io/v3"
 	csfedv3 "github.com/containership/cluster-manager/pkg/apis/federation.containership.io/v3"
@@ -34,29 +34,44 @@ func (cp *CsClusters) Sync() error {
 		return errors.Wrap(err, "listing clusters")
 	}
 
-	// Use an intermediate type that will marshal to the same json as a
-	// csfedv3.Cluster. This allows us to easily transform from the
-	// conglomerate of cloud responses to the CR type by round-tripping through
-	// the json serializer.
-	type clusterWithLabels struct {
-		Cluster apitypes.Cluster        `json:",inline"`
-		Labels  []apitypes.ClusterLabel `json:"labels"`
-	}
-
-	clustersWithLabels := make([]clusterWithLabels, len(clusters))
+	clusterCRs := make([]csfedv3.ClusterSpec, len(clusters))
 	for i, cluster := range clusters {
 		labels, err := cp.cloud.API().ClusterLabels(cp.organizationID, string(cluster.ID)).List()
 		if err != nil {
 			return errors.Wrapf(err, "getting labels for cluster %q", cluster.ID)
 		}
 
-		clustersWithLabels[i] = clusterWithLabels{
-			Cluster: cluster,
-			Labels:  labels,
+		// TODO the following is incredibly fragile. We have to manually
+		// translate types due to the need to merge the label responses with
+		// each cluster response.
+		clusterCRs[i] = csfedv3.ClusterSpec{
+			ID:                 string(cluster.ID),
+			CreatedAt:          *cluster.CreatedAt,
+			UpdatedAt:          *cluster.UpdatedAt,
+			OrganizationID:     string(cluster.OrganizationID),
+			Name:               *cluster.Name,
+			OwnerID:            string(cluster.OwnerID),
+			APIServerAddress:   *cluster.APIServerAddress,
+			WorkerNodesAddress: *cluster.WorkerNodesAddress,
+			Environment:        *cluster.Environment,
+			Version:            *cluster.Version,
+			ProviderName:       *cluster.ProviderName,
+
+			Labels: make([]csv3.ClusterLabelSpec, len(labels)),
+		}
+
+		for j, label := range labels {
+			clusterCRs[i].Labels[j] = csv3.ClusterLabelSpec{
+				ID:        string(label.ID),
+				CreatedAt: label.CreatedAt,
+				UpdatedAt: label.UpdatedAt,
+				Key:       *label.Key,
+				Value:     *label.Value,
+			}
 		}
 	}
 
-	data, err := json.Marshal(clustersWithLabels)
+	data, err := json.Marshal(clusterCRs)
 	if err != nil {
 		return err
 	}

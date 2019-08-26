@@ -34,7 +34,7 @@ type ClusterSpec struct {
 
 	// These are not part of the cluster response from cloud. Instead, a
 	// separate labels request is made to load these.
-	Labels []csv3.ClusterLabelSpec
+	Labels []csv3.ClusterLabelSpec `json:"labels"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
