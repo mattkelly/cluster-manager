@@ -21,6 +21,7 @@ package scheme
 import (
 	containershipauthv3 "github.com/containership/cluster-manager/pkg/apis/auth.containership.io/v3"
 	containershipv3 "github.com/containership/cluster-manager/pkg/apis/containership.io/v3"
+	containershipfederationv3 "github.com/containership/cluster-manager/pkg/apis/federation.containership.io/v3"
 	containershipprovisionv3 "github.com/containership/cluster-manager/pkg/apis/provision.containership.io/v3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -35,6 +36,7 @@ var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
 	containershipauthv3.AddToScheme,
 	containershipv3.AddToScheme,
+	containershipfederationv3.AddToScheme,
 	containershipprovisionv3.AddToScheme,
 }
 

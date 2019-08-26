@@ -24,6 +24,8 @@ import (
 	fakecontainershipauthv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/auth.containership.io/v3/fake"
 	containershipv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/containership.io/v3"
 	fakecontainershipv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/containership.io/v3/fake"
+	containershipfederationv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/federation.containership.io/v3"
+	fakecontainershipfederationv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/federation.containership.io/v3/fake"
 	containershipprovisionv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/provision.containership.io/v3"
 	fakecontainershipprovisionv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/provision.containership.io/v3/fake"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,6 +90,11 @@ func (c *Clientset) ContainershipAuthV3() containershipauthv3.ContainershipAuthV
 // ContainershipV3 retrieves the ContainershipV3Client
 func (c *Clientset) ContainershipV3() containershipv3.ContainershipV3Interface {
 	return &fakecontainershipv3.FakeContainershipV3{Fake: &c.Fake}
+}
+
+// ContainershipFederationV3 retrieves the ContainershipFederationV3Client
+func (c *Clientset) ContainershipFederationV3() containershipfederationv3.ContainershipFederationV3Interface {
+	return &fakecontainershipfederationv3.FakeContainershipFederationV3{Fake: &c.Fake}
 }
 
 // ContainershipProvisionV3 retrieves the ContainershipProvisionV3Client

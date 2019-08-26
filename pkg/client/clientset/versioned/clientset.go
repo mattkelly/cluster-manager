@@ -21,6 +21,7 @@ package versioned
 import (
 	containershipauthv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/auth.containership.io/v3"
 	containershipv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/containership.io/v3"
+	containershipfederationv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/federation.containership.io/v3"
 	containershipprovisionv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/provision.containership.io/v3"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
@@ -31,6 +32,7 @@ type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	ContainershipAuthV3() containershipauthv3.ContainershipAuthV3Interface
 	ContainershipV3() containershipv3.ContainershipV3Interface
+	ContainershipFederationV3() containershipfederationv3.ContainershipFederationV3Interface
 	ContainershipProvisionV3() containershipprovisionv3.ContainershipProvisionV3Interface
 }
 
@@ -38,9 +40,10 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	containershipAuthV3      *containershipauthv3.ContainershipAuthV3Client
-	containershipV3          *containershipv3.ContainershipV3Client
-	containershipProvisionV3 *containershipprovisionv3.ContainershipProvisionV3Client
+	containershipAuthV3       *containershipauthv3.ContainershipAuthV3Client
+	containershipV3           *containershipv3.ContainershipV3Client
+	containershipFederationV3 *containershipfederationv3.ContainershipFederationV3Client
+	containershipProvisionV3  *containershipprovisionv3.ContainershipProvisionV3Client
 }
 
 // ContainershipAuthV3 retrieves the ContainershipAuthV3Client
@@ -51,6 +54,11 @@ func (c *Clientset) ContainershipAuthV3() containershipauthv3.ContainershipAuthV
 // ContainershipV3 retrieves the ContainershipV3Client
 func (c *Clientset) ContainershipV3() containershipv3.ContainershipV3Interface {
 	return c.containershipV3
+}
+
+// ContainershipFederationV3 retrieves the ContainershipFederationV3Client
+func (c *Clientset) ContainershipFederationV3() containershipfederationv3.ContainershipFederationV3Interface {
+	return c.containershipFederationV3
 }
 
 // ContainershipProvisionV3 retrieves the ContainershipProvisionV3Client
@@ -82,6 +90,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.containershipFederationV3, err = containershipfederationv3.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.containershipProvisionV3, err = containershipprovisionv3.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -100,6 +112,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
 	cs.containershipAuthV3 = containershipauthv3.NewForConfigOrDie(c)
 	cs.containershipV3 = containershipv3.NewForConfigOrDie(c)
+	cs.containershipFederationV3 = containershipfederationv3.NewForConfigOrDie(c)
 	cs.containershipProvisionV3 = containershipprovisionv3.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
@@ -111,6 +124,7 @@ func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.containershipAuthV3 = containershipauthv3.New(c)
 	cs.containershipV3 = containershipv3.New(c)
+	cs.containershipFederationV3 = containershipfederationv3.New(c)
 	cs.containershipProvisionV3 = containershipprovisionv3.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
