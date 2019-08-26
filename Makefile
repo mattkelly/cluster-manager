@@ -113,7 +113,6 @@ undeploy: undeploy-agent undeploy-coordinator undeploy-common ## Delete everythi
 
 .PHONY: build-agent
 build-agent: ## Build the agent in Docker
-	@eval $$(minikube docker-env) ;\
 	docker image build -t $(AGENT_IMAGE_NAME):$(AGENT_IMAGE_TAG) \
 		--build-arg GIT_DESCRIBE=`git describe --dirty` \
 		--build-arg GIT_COMMIT=`git rev-parse --short HEAD` \
@@ -124,7 +123,6 @@ agent: build-agent deploy-agent ## Build and deploy the agent
 
 .PHONY: build-coordinator
 build-coordinator: ## Build the coordinator in Docker
-	@eval $$(minikube docker-env) ;\
 	docker image build -t $(COORDINATOR_IMAGE_NAME):$(COORDINATOR_IMAGE_TAG) \
 		--build-arg GIT_DESCRIBE=`git describe --dirty` \
 		--build-arg GIT_COMMIT=`git rev-parse --short HEAD` \

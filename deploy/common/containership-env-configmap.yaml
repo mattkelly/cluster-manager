@@ -15,8 +15,8 @@ data:
   AGENT_INFORMER_SYNC_INTERVAL_SEC: "30s"
   COORDINATOR_INFORMER_SYNC_INTERVAL_SEC: "30s"
 
-  # Assume minikube - change this for other environments
-  NODE_NAME: "minikube"
+  # Assume docker-for-desktop - change this for other environments
+  NODE_NAME: "docker-desktop"
 
   # These must be filled in for local testing
   CONTAINERSHIP_CLOUD_CLUSTER_API_KEY: ""
