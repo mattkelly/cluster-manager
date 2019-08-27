@@ -26,6 +26,7 @@ import (
 	versioned "github.com/containership/cluster-manager/pkg/client/clientset/versioned"
 	authcontainershipio "github.com/containership/cluster-manager/pkg/client/informers/externalversions/auth.containership.io"
 	containershipio "github.com/containership/cluster-manager/pkg/client/informers/externalversions/containership.io"
+	corekubefedio "github.com/containership/cluster-manager/pkg/client/informers/externalversions/core.kubefed.io"
 	federationcontainershipio "github.com/containership/cluster-manager/pkg/client/informers/externalversions/federation.containership.io"
 	internalinterfaces "github.com/containership/cluster-manager/pkg/client/informers/externalversions/internalinterfaces"
 	provisioncontainershipio "github.com/containership/cluster-manager/pkg/client/informers/externalversions/provision.containership.io"
@@ -177,6 +178,7 @@ type SharedInformerFactory interface {
 
 	ContainershipAuth() authcontainershipio.Interface
 	Containership() containershipio.Interface
+	KubeFedCore() corekubefedio.Interface
 	ContainershipFederation() federationcontainershipio.Interface
 	ContainershipProvision() provisioncontainershipio.Interface
 }
@@ -187,6 +189,10 @@ func (f *sharedInformerFactory) ContainershipAuth() authcontainershipio.Interfac
 
 func (f *sharedInformerFactory) Containership() containershipio.Interface {
 	return containershipio.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) KubeFedCore() corekubefedio.Interface {
+	return corekubefedio.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) ContainershipFederation() federationcontainershipio.Interface {

@@ -21,6 +21,7 @@ package versioned
 import (
 	containershipauthv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/auth.containership.io/v3"
 	containershipv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/containership.io/v3"
+	kubefedcorev1beta1 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/core.kubefed.io/v1beta1"
 	containershipfederationv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/federation.containership.io/v3"
 	containershipprovisionv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/provision.containership.io/v3"
 	discovery "k8s.io/client-go/discovery"
@@ -32,6 +33,7 @@ type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	ContainershipAuthV3() containershipauthv3.ContainershipAuthV3Interface
 	ContainershipV3() containershipv3.ContainershipV3Interface
+	KubeFedCoreV1beta1() kubefedcorev1beta1.KubeFedCoreV1beta1Interface
 	ContainershipFederationV3() containershipfederationv3.ContainershipFederationV3Interface
 	ContainershipProvisionV3() containershipprovisionv3.ContainershipProvisionV3Interface
 }
@@ -42,6 +44,7 @@ type Clientset struct {
 	*discovery.DiscoveryClient
 	containershipAuthV3       *containershipauthv3.ContainershipAuthV3Client
 	containershipV3           *containershipv3.ContainershipV3Client
+	kubeFedCoreV1beta1        *kubefedcorev1beta1.KubeFedCoreV1beta1Client
 	containershipFederationV3 *containershipfederationv3.ContainershipFederationV3Client
 	containershipProvisionV3  *containershipprovisionv3.ContainershipProvisionV3Client
 }
@@ -54,6 +57,11 @@ func (c *Clientset) ContainershipAuthV3() containershipauthv3.ContainershipAuthV
 // ContainershipV3 retrieves the ContainershipV3Client
 func (c *Clientset) ContainershipV3() containershipv3.ContainershipV3Interface {
 	return c.containershipV3
+}
+
+// KubeFedCoreV1beta1 retrieves the KubeFedCoreV1beta1Client
+func (c *Clientset) KubeFedCoreV1beta1() kubefedcorev1beta1.KubeFedCoreV1beta1Interface {
+	return c.kubeFedCoreV1beta1
 }
 
 // ContainershipFederationV3 retrieves the ContainershipFederationV3Client
@@ -90,6 +98,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.kubeFedCoreV1beta1, err = kubefedcorev1beta1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.containershipFederationV3, err = containershipfederationv3.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -112,6 +124,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
 	cs.containershipAuthV3 = containershipauthv3.NewForConfigOrDie(c)
 	cs.containershipV3 = containershipv3.NewForConfigOrDie(c)
+	cs.kubeFedCoreV1beta1 = kubefedcorev1beta1.NewForConfigOrDie(c)
 	cs.containershipFederationV3 = containershipfederationv3.NewForConfigOrDie(c)
 	cs.containershipProvisionV3 = containershipprovisionv3.NewForConfigOrDie(c)
 
@@ -124,6 +137,7 @@ func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.containershipAuthV3 = containershipauthv3.New(c)
 	cs.containershipV3 = containershipv3.New(c)
+	cs.kubeFedCoreV1beta1 = kubefedcorev1beta1.New(c)
 	cs.containershipFederationV3 = containershipfederationv3.New(c)
 	cs.containershipProvisionV3 = containershipprovisionv3.New(c)
 

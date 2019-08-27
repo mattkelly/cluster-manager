@@ -971,6 +971,14 @@
   revision = "6999998975a717e7f5fc2a7476497044cb111854"
 
 [[projects]]
+  digest = "1:2940cffd1865b6db5240e929bb66b52bacb8547f250780d01661247388746399"
+  name = "sigs.k8s.io/kubefed"
+  packages = ["pkg/apis/core/common"]
+  pruneopts = "UT"
+  revision = "7586b42f4f477f1912caf28287fa2e0a7f68f407"
+  version = "v0.1.0-rc6"
+
+[[projects]]
   digest = "1:7719608fe0b52a4ece56c2dde37bedd95b938677d1ab0f84b8a7852e4c59f849"
   name = "sigs.k8s.io/yaml"
   packages = ["."]
@@ -1047,6 +1055,7 @@
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/gengo/args",
     "k8s.io/klog",
+    "sigs.k8s.io/kubefed/pkg/apis/core/common",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

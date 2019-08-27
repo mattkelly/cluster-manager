@@ -24,6 +24,8 @@ import (
 	fakecontainershipauthv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/auth.containership.io/v3/fake"
 	containershipv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/containership.io/v3"
 	fakecontainershipv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/containership.io/v3/fake"
+	kubefedcorev1beta1 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/core.kubefed.io/v1beta1"
+	fakekubefedcorev1beta1 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/core.kubefed.io/v1beta1/fake"
 	containershipfederationv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/federation.containership.io/v3"
 	fakecontainershipfederationv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/federation.containership.io/v3/fake"
 	containershipprovisionv3 "github.com/containership/cluster-manager/pkg/client/clientset/versioned/typed/provision.containership.io/v3"
@@ -90,6 +92,11 @@ func (c *Clientset) ContainershipAuthV3() containershipauthv3.ContainershipAuthV
 // ContainershipV3 retrieves the ContainershipV3Client
 func (c *Clientset) ContainershipV3() containershipv3.ContainershipV3Interface {
 	return &fakecontainershipv3.FakeContainershipV3{Fake: &c.Fake}
+}
+
+// KubeFedCoreV1beta1 retrieves the KubeFedCoreV1beta1Client
+func (c *Clientset) KubeFedCoreV1beta1() kubefedcorev1beta1.KubeFedCoreV1beta1Interface {
+	return &fakekubefedcorev1beta1.FakeKubeFedCoreV1beta1{Fake: &c.Fake}
 }
 
 // ContainershipFederationV3 retrieves the ContainershipFederationV3Client

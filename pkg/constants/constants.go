@@ -14,6 +14,8 @@ const (
 	// ContainershipNamespace is the namespace in which all containership
 	// resources will live
 	ContainershipNamespace = "containership-core"
+	// KubeFedNamespace is the namespace in which core kubefed resources live
+	KubeFedNamespace = "kube-federation-system"
 	// ContainershipServiceAccountName is the name of containership controlled
 	// service account in every namespace
 	ContainershipServiceAccountName = "containership"
@@ -22,6 +24,7 @@ const (
 	KubernetesControlPlaneNamespace = "kube-system"
 )
 
+// Labels
 const (
 	// ContainershipNodeIDLabelKey is the label key for the Containership node ID on nodes
 	ContainershipNodeIDLabelKey = "containership.io/node-id"
@@ -33,11 +36,14 @@ const (
 	ContainershipNodePoolLabelPrefix = "nodepool.containership.io/"
 )
 
+// Finalizers
 const (
 	// AuthorizationRoleFinalizerName is the name of the AuthorizationRole finalizer
 	AuthorizationRoleFinalizerName = "authorizationrole.finalizers.containership.io"
 	// AuthorizationRoleBindingFinalizerName is the name of the AuthorizationRoleBinding finalizer
 	AuthorizationRoleBindingFinalizerName = "authorizationrolebinding.finalizers.containership.io"
+	// ClusterFinalizerName is the name of the Cluster finalizer
+	ClusterFinalizerName = "cluster.finalizers.federation.containership.io"
 )
 
 const (

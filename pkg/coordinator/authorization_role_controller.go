@@ -80,7 +80,7 @@ func NewAuthorizationRoleController(kubeclientset kubernetes.Interface,
 			// unexpected ClusterRole deletions.
 			c.enqueueAuthorizationRole(new)
 		},
-		// We don't need to listen for deletes because the finalizer logic
+		// we don't need to listen for deletes because the finalizer logic
 		// depends only on update events.
 	})
 

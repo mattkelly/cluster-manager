@@ -23,6 +23,7 @@ import (
 
 	v3 "github.com/containership/cluster-manager/pkg/apis/auth.containership.io/v3"
 	containershipiov3 "github.com/containership/cluster-manager/pkg/apis/containership.io/v3"
+	v1beta1 "github.com/containership/cluster-manager/pkg/apis/core.kubefed.io/v1beta1"
 	federationcontainershipiov3 "github.com/containership/cluster-manager/pkg/apis/federation.containership.io/v3"
 	provisioncontainershipiov3 "github.com/containership/cluster-manager/pkg/apis/provision.containership.io/v3"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -70,6 +71,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Containership().V3().Registries().Informer()}, nil
 	case containershipiov3.SchemeGroupVersion.WithResource("users"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Containership().V3().Users().Informer()}, nil
+
+		// Group=core.kubefed.io, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("kubefedclusters"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.KubeFedCore().V1beta1().KubeFedClusters().Informer()}, nil
 
 		// Group=federation.containership.io, Version=v3
 	case federationcontainershipiov3.SchemeGroupVersion.WithResource("clusters"):

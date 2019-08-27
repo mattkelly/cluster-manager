@@ -60,6 +60,10 @@ required = [
   version = "kubernetes-1.15.1"
 
 [[constraint]]
+  name = "sigs.k8s.io/kubefed"
+  version = "0.1.0-rc6"
+
+[[constraint]]
   name = "github.com/containership/cerebral"
   version = "0.6.0-alpha"
 
