@@ -30,12 +30,13 @@ const (
 	ContainershipNodeIDLabelKey = "containership.io/node-id"
 	// ContainershipNodePoolIDLabelKey is the label key for the Containership node pool ID
 	ContainershipNodePoolIDLabelKey = "containership.io/node-pool-id"
-	// ContainershipFederationNameLabelKey is the label key for the Containership federation name
-	ContainershipFederationNameLabelKey = "federation.containership.io/name"
 	// ContainershipClusterLabelPrefix is the prefix for cluster labels
 	ContainershipClusterLabelPrefix = "cluster.containership.io/"
 	// ContainershipNodePoolLabelPrefix is the prefix for node pool labels
 	ContainershipNodePoolLabelPrefix = "nodepool.containership.io/"
+
+	// ContainershipFederationNameLabelKey is the label key for the Containership federation name
+	ContainershipFederationNameLabelKey = ContainershipClusterLabelPrefix + "federation-name"
 )
 
 // Finalizers

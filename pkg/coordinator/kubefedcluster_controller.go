@@ -240,6 +240,7 @@ func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
 	}
 
 	// If this cluster doesn't belong to a federation, then we can ignore it.
+	// TODO actually use this federation name
 	federationName := getFederationNameForCluster(cluster.Spec)
 	if federationName == "" {
 		log.Debugf("%s: ignoring Cluster %s that does not belong to a federation",
