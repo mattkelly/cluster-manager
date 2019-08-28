@@ -21,6 +21,7 @@ import (
 
 	kubefedlisters "github.com/containership/cluster-manager/pkg/client/listers/core.kubefed.io/v1beta1"
 
+	csv3 "github.com/containership/cluster-manager/pkg/apis/containership.io/v3"
 	csfedv3 "github.com/containership/cluster-manager/pkg/apis/federation.containership.io/v3"
 
 	csclientset "github.com/containership/cluster-manager/pkg/client/clientset/versioned"
@@ -220,7 +221,13 @@ func (c *KubeFedClusterController) enqueueClusterForKubeFedCluster(obj interface
 }
 
 func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
-	_, name, _ := cache.SplitMetaNamespaceKey(key)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+
+	if namespace != constants.ContainershipNamespace {
+		// Should never happen
+		log.Infof("Ignoring Containership Cluster %s in namespace %s", name, namespace)
+		return nil
+	}
 
 	cluster, err := c.clusterLister.Clusters(constants.ContainershipNamespace).Get(name)
 	if err != nil {
@@ -230,6 +237,14 @@ func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
 		}
 
 		return errors.Wrapf(err, "getting Cluster CR %s for KubeFedCluster reconciliation", name)
+	}
+
+	// If this cluster doesn't belong to a federation, then we can ignore it.
+	federationName := getFederationNameForCluster(cluster.Spec)
+	if federationName == "" {
+		log.Debugf("%s: ignoring Cluster %s that does not belong to a federation",
+			kubeFedClusterControllerName, cluster.Name)
+		return nil
 	}
 
 	if !cluster.DeletionTimestamp.IsZero() {
@@ -259,18 +274,22 @@ func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
 
 	// KubeFedClusters we create always live in the kubefed namespace and
 	// always have the same name as the owning Cluster
-	kfCluster, err := c.kubeFedClusterLister.KubeFedClusters(constants.KubeFedNamespace).Get(name)
+	_, err = c.kubeFedClusterLister.KubeFedClusters(constants.KubeFedNamespace).Get(name)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			// We don't have a matching KubeFedCluster, so create it
 			log.Infof("%s: Creating missing KubeFedCluster %s", kubeFedClusterControllerName, name)
-			kfCluster = kubeFedClusterFromCluster(*cluster)
+			kfCluster := kubeFedClusterFromClusterSpec(cluster.Spec)
 			_, err = c.csclientset.KubeFedCoreV1beta1().KubeFedClusters(constants.KubeFedNamespace).Create(&kfCluster)
-			return err
+			return errors.Wrapf(err, "creating new KubeFedCluster %q", kfCluster.Name)
 		}
 	}
 
-	return nil
+	// The KubeFedCluster exists - make sure it matches the Cluster
+	// TODO for now just always update
+	kfCluster := kubeFedClusterFromClusterSpec(cluster.Spec)
+	_, err = c.csclientset.KubeFedCoreV1beta1().KubeFedClusters(constants.KubeFedNamespace).Update(&kfCluster)
+	return err
 }
 
 func (c *KubeFedClusterController) deleteKubeFedClusterIfExists(name string) error {
@@ -287,12 +306,44 @@ func (c *KubeFedClusterController) deleteKubeFedClusterIfExists(name string) err
 	return c.csclientset.KubeFedCoreV1beta1().KubeFedClusters(constants.KubeFedNamespace).Delete(name, &metav1.DeleteOptions{})
 }
 
-func kubeFedClusterFromCluster(cluster csfedv3.Cluster) kubefedv1beta1.KubeFedCluster {
+func kubeFedClusterFromClusterSpec(cluster csfedv3.ClusterSpec) kubefedv1beta1.KubeFedCluster {
+	additionalLabels := labelMapFromClusterLabels(cluster.Labels)
+
 	return kubefedv1beta1.KubeFedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   cluster.Name,
-			Labels: constants.BuildContainershipLabelMap(nil),
+			Labels: additionalLabels,
 		},
-		// TODO
+		Spec: kubefedv1beta1.KubeFedClusterSpec{
+			APIEndpoint: cluster.APIServerAddress,
+			// This secret must live in the kubefed core namespace
+			SecretRef: kubefedv1beta1.LocalSecretReference{
+				// TODO env var
+				Name: "containership-token",
+			},
+		},
 	}
+}
+
+func labelMapFromClusterLabels(clusterLabels []csv3.ClusterLabelSpec) map[string]string {
+	if clusterLabels == nil {
+		return nil
+	}
+
+	m := map[string]string{}
+	for _, label := range clusterLabels {
+		m[label.Key] = label.Value
+	}
+
+	return m
+}
+
+func getFederationNameForCluster(cluster csfedv3.ClusterSpec) string {
+	for _, label := range cluster.Labels {
+		if label.Key == constants.ContainershipFederationNameLabelKey {
+			return label.Value
+		}
+	}
+
+	return ""
 }
