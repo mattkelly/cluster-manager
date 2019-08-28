@@ -243,12 +243,19 @@ func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
 		return errors.Wrapf(err, "getting Cluster CR %s for KubeFedCluster reconciliation", name)
 	}
 
-	// If this cluster doesn't belong to a federation, then we can ignore it.
-	federationName := getFederationNameForCluster(cluster.Spec)
 	thisFederation := env.FederationName()
+
+	federationName := getFederationNameForCluster(cluster.Spec)
 	if federationName != thisFederation {
-		log.Debugf("%s: ignoring Cluster %s that does not belong to federation %s",
-			kubeFedClusterControllerName, cluster.Name, thisFederation)
+		// This cluster does not belong to this federation. We should delete
+		// the matching KubeFedCluster if it exists. This covers the case where
+		// the federation label was removed from the Cluster, thus removing it
+		// from the federation.
+		err := c.deleteKubeFedClusterIfExists(name)
+		if err != nil {
+			return errors.Wrapf(err, "deleting KubeFedCluster %s in non-matching federation %q", federationName)
+		}
+
 		return nil
 	}
 
