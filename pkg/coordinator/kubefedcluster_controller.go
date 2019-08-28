@@ -213,11 +213,14 @@ func (c *KubeFedClusterController) enqueueCluster(obj interface{}) {
 	c.workqueue.AddRateLimited(key)
 }
 
-// enqueueClusterForKubeFedCluster enqueues the Containership Cluster for a KubeFedCluster
-// Since the name of the KubeFedCluster is equal to the name of the Containership cluster,
-// this function can actually just use the normal enqueueCluster() function.
+// enqueueClusterForKubeFedCluster enqueues the Containership Cluster for a
+// KubeFedCluster Since the name of the KubeFedCluster is equal to the name of
+// the Containership cluster and the namespace for Clusters is always the same,
+// we can just build the key manually here.
 func (c *KubeFedClusterController) enqueueClusterForKubeFedCluster(obj interface{}) {
-	c.enqueueCluster(obj)
+	cluster := obj.(*kubefedv1beta1.KubeFedCluster)
+	key := fmt.Sprintf("%s/%s", constants.ContainershipNamespace, cluster.Name)
+	c.workqueue.AddRateLimited(key)
 }
 
 func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
