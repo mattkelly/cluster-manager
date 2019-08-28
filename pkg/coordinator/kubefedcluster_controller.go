@@ -279,21 +279,37 @@ func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
 
 	// KubeFedClusters we create always live in the kubefed namespace and
 	// always have the same name as the owning Cluster
-	_, err = c.kubeFedClusterLister.KubeFedClusters(constants.KubeFedNamespace).Get(name)
+	kfCluster, err := c.kubeFedClusterLister.KubeFedClusters(constants.KubeFedNamespace).Get(name)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			// We don't have a matching KubeFedCluster, so create it
 			log.Infof("%s: Creating missing KubeFedCluster %s", kubeFedClusterControllerName, name)
-			kfCluster := kubeFedClusterFromClusterSpec(cluster.Spec)
-			_, err = c.csclientset.KubeFedCoreV1beta1().KubeFedClusters(constants.KubeFedNamespace).Create(&kfCluster)
-			return errors.Wrapf(err, "creating new KubeFedCluster %q", kfCluster.Name)
+			kfClusterNew := kubeFedClusterFromClusterSpec(cluster.Spec)
+			_, err = c.csclientset.KubeFedCoreV1beta1().KubeFedClusters(constants.KubeFedNamespace).Create(&kfClusterNew)
+			return errors.Wrapf(err, "creating new KubeFedCluster %q", kfClusterNew.Name)
 		}
 	}
 
 	// The KubeFedCluster exists - make sure it matches the Cluster
 	// TODO for now just always update
-	kfCluster := kubeFedClusterFromClusterSpec(cluster.Spec)
-	_, err = c.csclientset.KubeFedCoreV1beta1().KubeFedClusters(constants.KubeFedNamespace).Update(&kfCluster)
+	// TODO can't use kubeFedClusterFromClusterSpec() to build an entirely new
+	// cluster because (unlike other resources for which we do this) it
+	// complains about the missing ResourceVersion on updates. Copy and modify
+	// instead.
+	kfClusterCopy := kfCluster.DeepCopy()
+
+	additionalLabels := labelMapFromClusterLabels(cluster.Spec.Labels)
+	kfClusterCopy.Labels = constants.BuildContainershipLabelMap(additionalLabels)
+	kfClusterCopy.Spec = kubefedv1beta1.KubeFedClusterSpec{
+		APIEndpoint: getContainershipProxyAddressForCluster(cluster.Spec.ID),
+		// This secret must live in the kubefed core namespace
+		SecretRef: kubefedv1beta1.LocalSecretReference{
+			// TODO env var
+			Name: "containership-token",
+		},
+	}
+
+	_, err = c.csclientset.KubeFedCoreV1beta1().KubeFedClusters(constants.KubeFedNamespace).Update(kfClusterCopy)
 	return err
 }
 
