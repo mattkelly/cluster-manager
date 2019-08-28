@@ -9,6 +9,11 @@ if [[ -z "$FEDERATION_NAME" ]]; then
     exit 1
 fi
 
+if [[ -z "$GITHUB_TOKEN" ]]; then
+    echo "GITHUB_TOKEN environment variable must be set" 1>&2
+    exit 1
+fi
+
 if [[ -z "$CONTAINERSHIP_TOKEN" ]]; then
     echo "Attempting to get Containership token from csctl config file"
     CONTAINERSHIP_TOKEN=$(grep '^token:' $HOME/.containership/csctl.yaml | awk '{print $2}')
@@ -22,9 +27,21 @@ fi
 # This script assumes that kubectl is properly configured to point to the host
 # cluster on which we're installing kubefed (and other required resources)
 
-echo "Applying kubefed manifests"
+echo "Applying Containership Cluster CRD"
 kubectl apply -f deploy/crd/containership-federation-cluster-crd.yaml
-kubectl apply -f deploy/kubefed/
+
+
+kubefed_yaml=$(mktemp /tmp/kubefed.yaml.XXXXXX)
+
+echo Downloading kubefed manifests to "$kubefed_yaml"
+curl -H "Authorization: token ${GITHUB_TOKEN}" \
+  -H 'Accept: application/vnd.github.v3.raw' \
+  -L -o $kubefed_yaml \
+  --silent --show-error \
+  https://api.github.com/repos/containership/kubefed-manifests/contents/kubefed.yaml >/dev/null
+
+echo Applying kubefed manifests at "$kubefed_yaml"
+kubectl apply -f $kubefed_yaml
 
 echo "Creating Containership token secret in kube-federation-system namespace"
 containership_token_base64=$(echo -n "$CONTAINERSHIP_TOKEN" | base64)
@@ -51,3 +68,6 @@ kubectl -n containership-core set env deployment/cloud-coordinator FEDERATION_NA
 
 echo "Updating cloud-coordinator image to kubefed tag"
 kubectl -n containership-core set image deployment/cloud-coordinator cloud-coordinator=containership/cloud-coordinator:kubefed
+
+echo "Deleting cloud-coordinator pod to force update"
+kubectl -n containership-core delete pod -l "containership.io/app=cloud-coordinator"
