@@ -340,7 +340,7 @@ func kubeFedClusterFromClusterSpec(cluster csfedv3.ClusterSpec) kubefedv1beta1.K
 	return kubefedv1beta1.KubeFedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   cluster.ID,
-			Labels: additionalLabels,
+			Labels: constants.BuildContainershipLabelMap(additionalLabels),
 		},
 		Spec: kubefedv1beta1.KubeFedClusterSpec{
 			APIEndpoint: getContainershipProxyAddressForCluster(cluster.ID),
