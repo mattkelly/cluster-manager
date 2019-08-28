@@ -29,6 +29,7 @@ import (
 	csfedlisters "github.com/containership/cluster-manager/pkg/client/listers/federation.containership.io/v3"
 
 	"github.com/containership/cluster-manager/pkg/constants"
+	"github.com/containership/cluster-manager/pkg/env"
 	"github.com/containership/cluster-manager/pkg/log"
 	"github.com/containership/cluster-manager/pkg/tools"
 )
@@ -243,11 +244,11 @@ func (c *KubeFedClusterController) clusterSyncHandler(key string) error {
 	}
 
 	// If this cluster doesn't belong to a federation, then we can ignore it.
-	// TODO actually use this federation name
 	federationName := getFederationNameForCluster(cluster.Spec)
-	if federationName == "" {
-		log.Debugf("%s: ignoring Cluster %s that does not belong to a federation",
-			kubeFedClusterControllerName, cluster.Name)
+	thisFederation := env.FederationName()
+	if federationName != thisFederation {
+		log.Debugf("%s: ignoring Cluster %s that does not belong to federation %s",
+			kubeFedClusterControllerName, cluster.Name, thisFederation)
 		return nil
 	}
 
@@ -315,11 +316,11 @@ func kubeFedClusterFromClusterSpec(cluster csfedv3.ClusterSpec) kubefedv1beta1.K
 
 	return kubefedv1beta1.KubeFedCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   cluster.Name,
+			Name:   cluster.ID,
 			Labels: additionalLabels,
 		},
 		Spec: kubefedv1beta1.KubeFedClusterSpec{
-			APIEndpoint: cluster.APIServerAddress,
+			APIEndpoint: getContainershipProxyAddressForCluster(cluster.ID),
 			// This secret must live in the kubefed core namespace
 			SecretRef: kubefedv1beta1.LocalSecretReference{
 				// TODO env var
@@ -350,4 +351,9 @@ func getFederationNameForCluster(cluster csfedv3.ClusterSpec) string {
 	}
 
 	return ""
+}
+
+func getContainershipProxyAddressForCluster(clusterID string) string {
+	return fmt.Sprintf("%s/v3/organizations/%s/clusters/%s/k8sapi/proxy",
+		env.ProxyBaseURL(), env.OrganizationID(), clusterID)
 }

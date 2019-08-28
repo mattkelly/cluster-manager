@@ -49,7 +49,7 @@ func NewCloudSynchronizer(csInformerFactory csinformers.SharedInformerFactory, c
 		log.Fatalf("failed to initialize Containership Cloud client: %s", err)
 	}
 
-	return &CloudSynchronizer{
+	synchronizer := CloudSynchronizer{
 		authorizationRoleBindingSyncController: synccontroller.NewAuthorizationRoleBinding(
 			k8sutil.API().Client(),
 			k8sutil.CSAPI().Client(),
@@ -113,16 +113,20 @@ func NewCloudSynchronizer(csInformerFactory csinformers.SharedInformerFactory, c
 			cloudclientset,
 		),
 
-		clusterSyncController: synccontroller.NewCluster(
+		syncStopCh: make(chan struct{}),
+		stopped:    false,
+	}
+
+	if env.IsFederationHost() {
+		synchronizer.clusterSyncController = synccontroller.NewCluster(
 			k8sutil.API().Client(),
 			k8sutil.CSAPI().Client(),
 			csInformerFactory,
 			cloudclientset,
-		),
-
-		syncStopCh: make(chan struct{}),
-		stopped:    false,
+		)
 	}
+
+	return &synchronizer
 }
 
 // Run kicks off cloud sync routines.
@@ -142,7 +146,9 @@ func (s *CloudSynchronizer) Run() {
 	go s.clusterLabelSyncController.SyncWithCloud(s.syncStopCh)
 	go s.nodePoolLabelSyncController.SyncWithCloud(s.syncStopCh)
 
-	go s.clusterSyncController.SyncWithCloud(s.syncStopCh)
+	if env.IsFederationHost() {
+		go s.clusterSyncController.SyncWithCloud(s.syncStopCh)
+	}
 }
 
 // RequestTerminate requests that all Containership resources be deleted from

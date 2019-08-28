@@ -18,6 +18,7 @@ type environment struct {
 	apiBaseURL                         string
 	authBaseURL                        string
 	provisionBaseURL                   string
+	proxyBaseURL                       string
 	clusterID                          string
 	csCloudEnvironment                 string
 	csServerPort                       string
@@ -27,6 +28,8 @@ type environment struct {
 	kubectlPath                        string
 	enableClusterUpgrade               bool
 	disableClusterManagementPluginSync bool
+
+	federationName string
 }
 
 const (
@@ -75,6 +78,11 @@ func init() {
 		env.provisionBaseURL = "https://provision.containership.io"
 	}
 
+	env.proxyBaseURL = os.Getenv("CONTAINERSHIP_CLOUD_PROXY_BASE_URL")
+	if env.proxyBaseURL == "" {
+		env.proxyBaseURL = "https://proxy.containership.io"
+	}
+
 	env.csCloudSyncInterval = getDurationEnvOrDefault("CONTAINERSHIP_CLOUD_SYNC_INTERVAL_SEC",
 		defaultContainershipCloudSyncInterval)
 
@@ -101,6 +109,8 @@ func init() {
 	env.enableClusterUpgrade = os.Getenv("ENABLE_CLUSTER_UPGRADE") == "true"
 
 	env.disableClusterManagementPluginSync = os.Getenv("DISABLE_CLUSTER_MANAGEMENT_PLUGIN_SYNC") == "true"
+
+	env.federationName = os.Getenv("FEDERATION_NAME")
 }
 
 // OrganizationID returns Containership Cloud organization id
@@ -118,19 +128,24 @@ func CloudClusterAPIKey() string {
 	return env.cloudClusterAPIKey
 }
 
-// APIBaseURL returns Containership Cloud API url
+// APIBaseURL returns the Containership Cloud API base URL
 func APIBaseURL() string {
 	return env.apiBaseURL
 }
 
-// AuthBaseURL returns Containership Cloud Auth url
+// AuthBaseURL returns the Containership Cloud Auth base URL
 func AuthBaseURL() string {
 	return env.authBaseURL
 }
 
-// ProvisionBaseURL returns Containership Cloud Provision url
+// ProvisionBaseURL returns the Containership Cloud Provision base URL
 func ProvisionBaseURL() string {
 	return env.provisionBaseURL
+}
+
+// ProxyBaseURL returns the Containership Cloud Proxy base URL
+func ProxyBaseURL() string {
+	return env.proxyBaseURL
 }
 
 // ContainershipCloudSyncInterval returns the cloud sync interval
@@ -181,6 +196,17 @@ func IsClusterUpgradeEnabled() bool {
 // IsClusterManagementPluginSyncDisabled returns true if syncing of cluster management plugin is disabled
 func IsClusterManagementPluginSyncDisabled() bool {
 	return env.disableClusterManagementPluginSync
+}
+
+// FederationName returns the name of the federation that this cluster belongs to
+func FederationName() string {
+	return env.federationName
+}
+
+// IsFederationHost returns true if this coordinator instance should run in
+// federation host mode, else false
+func IsFederationHost() bool {
+	return env.federationName != ""
 }
 
 // Dump dumps the environment if we're in a development or stage environment

@@ -76,11 +76,13 @@ func Initialize() {
 	authorizationRoleBindingController = NewAuthorizationRoleBindingController(
 		k8sutil.API().Client(), k8sutil.CSAPI().Client(), kubeInformerFactory, csInformerFactory)
 
-	kubeFedClusterController = NewKubeFedClusterController(
-		k8sutil.API().Client(), k8sutil.CSAPI().Client(), kubeInformerFactory, csInformerFactory)
-
 	if env.IsClusterUpgradeEnabled() {
 		cupController = NewUpgradeController(
+			k8sutil.API().Client(), k8sutil.CSAPI().Client(), kubeInformerFactory, csInformerFactory)
+	}
+
+	if env.IsFederationHost() {
+		kubeFedClusterController = NewKubeFedClusterController(
 			k8sutil.API().Client(), k8sutil.CSAPI().Client(), kubeInformerFactory, csInformerFactory)
 	}
 
@@ -110,10 +112,12 @@ func Run() {
 	go authorizationRoleController.Run(1, stopCh)
 	go authorizationRoleBindingController.Run(1, stopCh)
 
-	go kubeFedClusterController.Run(1, stopCh)
-
 	if env.IsClusterUpgradeEnabled() {
 		go cupController.Run(1, stopCh)
+	}
+
+	if env.IsFederationHost() {
+		go kubeFedClusterController.Run(1, stopCh)
 	}
 
 	// if stopCh is closed something went wrong
